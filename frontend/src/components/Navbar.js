@@ -52,6 +52,10 @@ const Navbar = ({ isAuthenticated, userRole, setIsAuthenticated, setUserRole }) 
                     Post Job
                   </Link>
                 )}
+
+                <Link to="/saved-jobs" className="text-white hover:text-yellow-500">
+                  Saved Jobs
+                </Link>
                 
                 <button
                   onClick={handleLogout}
@@ -141,6 +145,14 @@ const Navbar = ({ isAuthenticated, userRole, setIsAuthenticated, setUserRole }) 
                     Post Job
                   </Link>
                 )}
+
+                <Link
+                  to="/saved-jobs"
+                  className="block py-2 text-white hover:text-yellow-500"
+                  onClick={toggleMenu}
+                >
+                  Saved Jobs
+                </Link>
                 
                 <button
                   onClick={() => {

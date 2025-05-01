@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import JobList from './pages/JobList';
 import JobDetail from './pages/JobDetail';
 import PostJob from './pages/PostJob';
+import SavedJobs from './pages/SavedJobs';
 import NotFound from './pages/NotFound';
 
 // Components
@@ -90,6 +91,15 @@ function App() {
               element={
                 <ProtectedRoute isAuthenticated={isAuthenticated} requiredRole="employer">
                   <PostJob />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/saved-jobs" 
+              element={
+                <ProtectedRoute isAuthenticated={isAuthenticated}>
+                  <SavedJobs />
                 </ProtectedRoute>
               } 
             />

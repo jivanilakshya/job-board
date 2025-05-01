@@ -259,4 +259,83 @@ router.delete('/education/:edu_id', protect, async (req, res) => {
   }
 });
 
+// @route   POST /api/users/saved-jobs/:jobId
+// @desc    Save a job
+// @access  Private
+router.post('/saved-jobs/:jobId', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    
+    // Check if job is already saved
+    if (user.savedJobs.includes(req.params.jobId)) {
+      return res.status(400).json({ message: 'Job already saved' });
+    }
+
+    user.savedJobs.push(req.params.jobId);
+    await user.save();
+
+    res.json({
+      success: true,
+      data: user.savedJobs
+    });
+  } catch (err) {
+    console.error(err.message);
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   GET /api/users/saved-jobs
+// @desc    Get all saved jobs
+// @access  Private
+router.get('/saved-jobs', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate({
+      path: 'savedJobs',
+      select: 'title company location type category experience'
+    });
+
+    res.json({
+      success: true,
+      count: user.savedJobs.length,
+      data: user.savedJobs
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   DELETE /api/users/saved-jobs/:jobId
+// @desc    Remove a saved job
+// @access  Private
+router.delete('/saved-jobs/:jobId', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    
+    // Get remove index
+    const removeIndex = user.savedJobs.indexOf(req.params.jobId);
+    
+    if (removeIndex === -1) {
+      return res.status(404).json({ message: 'Job not found in saved jobs' });
+    }
+
+    user.savedJobs.splice(removeIndex, 1);
+    await user.save();
+
+    res.json({
+      success: true,
+      data: user.savedJobs
+    });
+  } catch (err) {
+    console.error(err.message);
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router; 
