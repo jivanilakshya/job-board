@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to JobBoard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background-color: #000;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Welcome to JobBoard!</h1>
+    </div>
+    
+    <div class="content">
+        <p>Hello {{name}},</p>
+        
+        <p>Welcome to JobBoard! We're excited to have you join our community of job seekers and employers.</p>
+        
+        <p>With your account, you can:</p>
+        <ul>
+            <li>Browse and apply for jobs</li>
+            <li>Create and manage your profile</li>
+            <li>Save interesting job listings</li>
+            <li>Track your applications</li>
+        </ul>
+
+        <p>To get started, please verify your email address by clicking the button below:</p>
+        
+        <div style="text-align: center;">
+            <a href="{{verificationLink}}" class="button">Verify Email Address</a>
+        </div>
+
+        <p>If you have any questions or need assistance, feel free to contact our support team.</p>
+        
+        <p>Best regards,<br>The JobBoard Team</p>
+    </div>
+    
+    <div class="footer">
+        <p>This email was sent to {{email}}. If you didn't create an account, you can safely ignore this email.</p>
+        <p>&copy; {{currentYear}} JobBoard. All rights reserved.</p>
+    </div>
+</body>
+</html> 

@@ -2,6 +2,32 @@ const express = require('express');
 const router = express.Router();
 const Job = require('../models/Job');
 const { protect, authorize } = require('../middleware/auth');
+const { sendEmail } = require('../services/emailService');
+const User = require('../models/User');
+
+// @route   GET /api/jobs/featured
+// @desc    Get featured jobs
+// @access  Public
+router.get('/featured', async (req, res) => {
+  try {
+    const jobs = await Job.find({ featured: true, active: true })
+      .sort('-createdAt')
+      .limit(6)
+      .populate({
+        path: 'employer',
+        select: 'name company'
+      });
+
+    res.json({
+      success: true,
+      count: jobs.length,
+      data: jobs
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // @route   GET /api/jobs
 // @desc    Get all jobs
@@ -14,6 +40,7 @@ router.get('/', async (req, res) => {
       category, 
       type, 
       experience, 
+      featured,
       sort = '-createdAt',
       page = 1,
       limit = 10
@@ -45,6 +72,11 @@ router.get('/', async (req, res) => {
     // Filter by experience level
     if (experience) {
       query.experience = experience;
+    }
+
+    // Filter by featured status
+    if (featured === 'true') {
+      query.featured = true;
     }
 
     // Execute query with pagination
@@ -223,6 +255,96 @@ router.delete('/:id', protect, async (req, res) => {
       return res.status(404).json({ message: 'Job not found' });
     }
     
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/jobs/:id/apply
+// @desc    Apply for a job
+// @access  Private (candidates only)
+router.post('/:id/apply', protect, authorize('candidate'), async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+    
+    if (!job) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+
+    // Create application
+    const application = {
+      candidate: req.user._id,
+      job: job._id,
+      status: 'pending',
+      ...req.body
+    };
+
+    // Save application to job
+    job.applications.push(application);
+    await job.save();
+
+    // Send notification to candidate
+    await sendEmail(
+      req.user.email,
+      'applicationSubmitted',
+      [job.title, job.company]
+    );
+
+    // Send notification to employer
+    const employer = await User.findById(job.employer);
+    if (employer) {
+      await sendEmail(
+        employer.email,
+        'newApplicationReceived',
+        [job.title, req.user.name]
+      );
+    }
+
+    res.status(201).json({
+      success: true,
+      data: application
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   PUT /api/jobs/:id/applications/:applicationId
+// @desc    Update application status
+// @access  Private (employers only)
+router.put('/:id/applications/:applicationId', protect, authorize('employer'), async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+    
+    if (!job) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+
+    const application = job.applications.id(req.params.applicationId);
+    if (!application) {
+      return res.status(404).json({ message: 'Application not found' });
+    }
+
+    // Update application status
+    application.status = req.body.status;
+    await job.save();
+
+    // Send notification to candidate
+    const candidate = await User.findById(application.candidate);
+    if (candidate) {
+      await sendEmail(
+        candidate.email,
+        'applicationStatusUpdate',
+        [job.title, job.company, req.body.status]
+      );
+    }
+
+    res.json({
+      success: true,
+      data: application
+    });
+  } catch (err) {
+    console.error(err.message);
     res.status(500).json({ message: 'Server error' });
   }
 });
