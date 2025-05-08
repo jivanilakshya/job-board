@@ -19,7 +19,7 @@ const JobDetail = () => {
     const fetchJobDetails = async () => {
       try {
         const response = await axios.get(`http://localhost:5000/api/jobs/${id}`);
-        setJob(response.data);
+        setJob(response.data.data);
         setLoading(false);
       } catch (error) {
         console.error('Error fetching job details:', error);
@@ -47,13 +47,22 @@ const JobDetail = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const formData = new FormData();
-      Object.keys(application).forEach(key => {
-        formData.append(key, application[key]);
-      });
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Please login to apply for this job');
+        navigate('/login');
+        return;
+      }
 
-      await axios.post(`http://localhost:5000/api/jobs/${id}/apply`, formData, {
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('jobId', id);
+      formData.append('resume', application.resume);
+      formData.append('coverLetter', application.coverLetter);
+
+      await axios.post('http://localhost:5000/api/applications', formData, {
         headers: {
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
         }
       });
@@ -62,7 +71,14 @@ const JobDetail = () => {
       navigate('/dashboard');
     } catch (error) {
       console.error('Error submitting application:', error);
-      alert('Failed to submit application. Please try again.');
+      if (error.response?.status === 401) {
+        alert('Please login to apply for this job');
+        navigate('/login');
+      } else if (error.response?.status === 400) {
+        alert(error.response.data.message || 'Failed to submit application. Please try again.');
+      } else {
+        alert('Failed to submit application. Please try again.');
+      }
     }
   };
 
@@ -106,15 +122,25 @@ const JobDetail = () => {
                 <p className="mb-4">{job.description}</p>
                 <h2 className="text-xl font-semibold mb-2">Requirements</h2>
                 <ul className="list-disc pl-5 mb-4">
-                  {job.requirements.map((req, index) => (
-                    <li key={index}>{req}</li>
-                  ))}
+                  {Array.isArray(job.requirements) 
+                    ? job.requirements.map((req, index) => (
+                        <li key={index}>{req}</li>
+                      ))
+                    : job.requirements.split('\n').map((req, index) => (
+                        <li key={index}>{req}</li>
+                      ))
+                  }
                 </ul>
                 <h2 className="text-xl font-semibold mb-2">Benefits</h2>
                 <ul className="list-disc pl-5">
-                  {job.benefits.map((benefit, index) => (
-                    <li key={index}>{benefit}</li>
-                  ))}
+                  {Array.isArray(job.benefits)
+                    ? job.benefits.map((benefit, index) => (
+                        <li key={index}>{benefit}</li>
+                      ))
+                    : job.benefits?.split('\n').map((benefit, index) => (
+                        <li key={index}>{benefit}</li>
+                      ))
+                  }
                 </ul>
               </div>
             </div>

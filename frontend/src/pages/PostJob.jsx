@@ -1,20 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { AuthContext } from '../context/AuthContext';
 
 const PostJob = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useContext(AuthContext);
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    requirements: '',
-    company: '',
-    location: '',
+    title: 'Software Developer',
+    description: 'We are looking for a skilled Software Developer to join our team. The ideal candidate will be responsible for developing and maintaining high-quality software solutions.',
+    requirements: 'Bachelor\'s degree in Computer Science or related field\n3+ years of experience in software development\nStrong knowledge of JavaScript, React, and Node.js\nExperience with database design and management\nExcellent problem-solving skills',
+    company: 'Tech Solutions Inc.',
+    location: 'New York, NY',
     type: 'Full-time',
-    category: '',
-    experience: 'Entry-level',
-    salary: '',
-    skills: '',
+    category: 'Technology',
+    experience: 'Mid-level',
+    salary: '80000 - 100000',
+    skills: 'JavaScript, React, Node.js, MongoDB, Express',
     applicationDeadline: ''
   });
   const [errors, setErrors] = useState({});
@@ -78,6 +80,11 @@ const PostJob = () => {
       return;
     }
 
+    if (!isAuthenticated || user?.role !== 'employer') {
+      setErrors({ general: 'You must be logged in as an employer to post a job.' });
+      return;
+    }
+
     try {
       setLoading(true);
       
@@ -86,7 +93,19 @@ const PostJob = () => {
         skills: formData.skills.split(',').map(skill => skill.trim())
       };
       
-      await axios.post('/jobs', formattedData);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setErrors({ general: 'Authentication token not found. Please login again.' });
+        setLoading(false);
+        return;
+      }
+
+      await axios.post('http://localhost:5000/api/jobs', formattedData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
       
       setSuccess(true);
       setLoading(false);
@@ -97,7 +116,12 @@ const PostJob = () => {
     } catch (err) {
       console.error('Error posting job:', err);
       
-      if (err.response?.data?.errors) {
+      if (err.response?.status === 401) {
+        setErrors({ general: 'Your session has expired. Please login again.' });
+        // Clear invalid token
+        localStorage.removeItem('token');
+        navigate('/login');
+      } else if (err.response?.data?.errors) {
         const apiErrors = {};
         err.response.data.errors.forEach(error => {
           apiErrors[error.param] = error.msg;

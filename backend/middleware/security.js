@@ -7,8 +7,18 @@ const cors = require('cors');
 
 // Security middleware
 exports.securityMiddleware = (app) => {
+  // Enable CORS with specific options
+  app.use(cors({
+    origin: 'http://localhost:3000', // Allow frontend origin
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  }));
+
   // Set security HTTP headers
-  app.use(helmet());
+  app.use(helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" }
+  }));
 
   // Prevent XSS attacks
   app.use(xss());
@@ -19,20 +29,26 @@ exports.securityMiddleware = (app) => {
   // Prevent parameter pollution
   app.use(hpp());
 
-  // Enable CORS
-  app.use(cors());
-
-  // Rate limiting
+  // Rate limiting - more permissive for development
   const limiter = rateLimit({
-    windowMs: 10 * 60 * 1000, // 10 minutes
-    max: 100 // limit each IP to 100 requests per windowMs
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 1000 // limit each IP to 1000 requests per windowMs
   });
-  app.use(limiter);
+  
+  // Apply rate limiting to all routes except auth
+  app.use((req, res, next) => {
+    if (req.path.startsWith('/api/auth')) {
+      next();
+    } else {
+      limiter(req, res, next);
+    }
+  });
 };
 
 // Error handling middleware
 exports.errorHandler = (err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Error:', err);
+  console.error('Stack:', err.stack);
 
   res.status(err.statusCode || 500).json({
     success: false,

@@ -51,6 +51,10 @@ const UserSchema = new mongoose.Schema({
     maxlength: [500, 'Bio cannot be more than 500 characters']
   },
   skills: [String],
+  savedJobs: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Job'
+  }],
   experience: [{
     title: String,
     company: String,
@@ -86,11 +90,24 @@ const UserSchema = new mongoose.Schema({
 // Encrypt password using bcrypt
 UserSchema.pre('save', async function(next) {
   if (!this.isModified('password')) {
-    next();
+    console.log('Password not modified, skipping hashing');
+    return next();
   }
 
+  console.log('=== Password Hashing Debug ===');
+  console.log('User email:', this.email);
+  console.log('Original password:', this.password);
+  console.log('Original password length:', this.password.length);
+  
   const salt = await bcrypt.genSalt(10);
+  console.log('Generated salt:', salt);
+  
   this.password = await bcrypt.hash(this.password, salt);
+  console.log('Hashed password:', this.password);
+  console.log('Hashed password length:', this.password.length);
+  console.log('=== End Password Hashing ===');
+  
+  next();
 });
 
 // Sign JWT and return
@@ -102,7 +119,22 @@ UserSchema.methods.getSignedJwtToken = function() {
 
 // Match user entered password to hashed password in database
 UserSchema.methods.matchPassword = async function(enteredPassword) {
-  return await bcrypt.compare(enteredPassword, this.password);
+  console.log('=== Password Comparison Debug ===');
+  console.log('User email:', this.email);
+  console.log('Entered password:', enteredPassword);
+  console.log('Entered password length:', enteredPassword.length);
+  console.log('Stored hashed password:', this.password);
+  console.log('Stored hashed password length:', this.password.length);
+  
+  try {
+    const isMatch = await bcrypt.compare(enteredPassword, this.password);
+    console.log('Password match result:', isMatch);
+    console.log('=== End Password Comparison ===');
+    return isMatch;
+  } catch (error) {
+    console.error('Error comparing passwords:', error);
+    throw error;
+  }
 };
 
 // Generate and hash password token

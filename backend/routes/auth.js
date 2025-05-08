@@ -26,9 +26,17 @@ router.post('/register', [
     .withMessage('Company name is required for employers')
 ], async (req, res) => {
   try {
+    console.log('Registration attempt with data:', {
+      name: req.body.name,
+      email: req.body.email,
+      role: req.body.role,
+      passwordLength: req.body.password ? req.body.password.length : 0
+    });
+
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
@@ -37,9 +45,12 @@ router.post('/register', [
     // Check if user already exists
     let user = await User.findOne({ email });
     if (user) {
+      console.log('User already exists:', email);
       return res.status(400).json({ message: 'User already exists' });
     }
 
+    console.log('Creating new user with password length:', password.length);
+    
     // Create new user
     user = new User({
       name,
@@ -49,17 +60,20 @@ router.post('/register', [
       company: role === 'employer' ? company : undefined
     });
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
-
-    // Save user
+    // Save user (password will be hashed by the pre-save middleware)
     await user.save();
+    console.log('User saved successfully:', { 
+      id: user._id, 
+      email: user.email, 
+      role: user.role,
+      hasPassword: !!user.password,
+      passwordLength: user.password ? user.password.length : 0
+    });
 
     // Generate JWT token
     const payload = {
       user: {
-        id: user.id,
+        _id: user._id,
         role: user.role
       }
     };
@@ -69,16 +83,11 @@ router.post('/register', [
       process.env.JWT_SECRET,
       { expiresIn: '24h' },
       (err, token) => {
-        if (err) throw err;
-        
-        // Send welcome email
-        try {
-          sendEmail(user.email, 'welcome', [user.name]);
-        } catch (emailError) {
-          console.error('Error sending welcome email:', emailError);
-          // Don't fail registration if email fails
+        if (err) {
+          console.error('JWT signing error:', err);
+          throw err;
         }
-
+        console.log('Registration successful for user:', email);
         res.json({ token });
       }
     );
@@ -99,27 +108,42 @@ router.post('/login', [
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
     const { email, password } = req.body;
+    console.log('Login attempt for email:', email);
+    console.log('Password length:', password.length);
 
     // Check if user exists and select password field
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
+      console.log('User not found for email:', email);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
+    console.log('User found:', { 
+      id: user._id, 
+      role: user.role,
+      hasPassword: !!user.password,
+      passwordLength: user.password ? user.password.length : 0
+    });
 
-    // Check password
-    const isMatch = await bcrypt.compare(password, user.password);
+    // Check password using the User model's matchPassword method
+    console.log('Attempting password comparison...');
+    const isMatch = await user.matchPassword(password);
+    console.log('Password comparison result:', isMatch);
+    
     if (!isMatch) {
+      console.log('Password mismatch for user:', email);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
+    console.log('Password matched for user:', email);
 
     // Generate JWT token
     const payload = {
       user: {
-        id: user.id,
+        _id: user._id,
         role: user.role
       }
     };
@@ -129,7 +153,11 @@ router.post('/login', [
       process.env.JWT_SECRET,
       { expiresIn: '24h' },
       (err, token) => {
-        if (err) throw err;
+        if (err) {
+          console.error('JWT signing error:', err);
+          throw err;
+        }
+        console.log('Login successful for user:', email);
         res.json({ token });
       }
     );

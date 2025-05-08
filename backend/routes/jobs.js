@@ -349,4 +349,107 @@ router.put('/:id/applications/:applicationId', protect, authorize('employer'), a
   }
 });
 
+// @route   GET /api/jobs/saved
+// @desc    Get user's saved jobs
+// @access  Private
+router.get('/saved', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate({
+      path: 'savedJobs',
+      populate: {
+        path: 'employer',
+        select: 'name company'
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      success: true,
+      data: user.savedJobs
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/jobs/:id/save
+// @desc    Save a job
+// @access  Private
+router.post('/:id/save', protect, async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+
+    if (!job) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    // Check if job is already saved
+    if (user.savedJobs.includes(job._id)) {
+      return res.status(400).json({ message: 'Job already saved' });
+    }
+
+    // Add job to saved jobs
+    user.savedJobs.push(job._id);
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Job saved successfully'
+    });
+  } catch (err) {
+    console.error(err.message);
+    
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+    
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   DELETE /api/jobs/:id/save
+// @desc    Unsave a job
+// @access  Private
+router.delete('/:id/save', protect, async (req, res) => {
+  try {
+    const job = await Job.findById(req.params.id);
+
+    if (!job) {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    // Check if job is saved
+    if (!user.savedJobs.includes(job._id)) {
+      return res.status(400).json({ message: 'Job is not saved' });
+    }
+
+    // Remove job from saved jobs
+    user.savedJobs = user.savedJobs.filter(
+      savedJob => savedJob.toString() !== job._id.toString()
+    );
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Job unsaved successfully'
+    });
+  } catch (err) {
+    console.error(err.message);
+    
+    if (err.kind === 'ObjectId') {
+      return res.status(404).json({ message: 'Job not found' });
+    }
+    
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router; 

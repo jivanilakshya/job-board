@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 import Navbar from './components/Navbar';
@@ -29,6 +29,14 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/jobs" element={<JobListings />} />
+              <Route
+                path="/post-job"
+                element={
+                  <PrivateRoute role="employer">
+                    <PostJob />
+                  </PrivateRoute>
+                }
+              />
               <Route path="/jobs/:id" element={<JobDetail />} />
               
               {/* Protected Routes */}
@@ -45,14 +53,6 @@ const App = () => {
                 element={
                   <PrivateRoute role="employer">
                     <EmployerDashboard />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/post-job"
-                element={
-                  <PrivateRoute role="employer">
-                    <PostJob />
                   </PrivateRoute>
                 }
               />

@@ -3,13 +3,44 @@ const router = express.Router();
 const Application = require('../models/Application');
 const Job = require('../models/Job');
 const { protect, authorize } = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+
+// Configure multer for file upload
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/resumes');
+  },
+  filename: function (req, file, cb) {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  fileFilter: function (req, file, cb) {
+    const filetypes = /pdf|doc|docx/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+
+    if (extname && mimetype) {
+      return cb(null, true);
+    } else {
+      cb('Error: Only PDF and Word documents are allowed!');
+    }
+  }
+});
 
 // @route   POST /api/applications
 // @desc    Submit job application
 // @access  Private (candidates only)
-router.post('/', protect, authorize('candidate'), async (req, res) => {
+router.post('/', protect, authorize('candidate'), upload.single('resume'), async (req, res) => {
   try {
-    const { jobId, resumeUrl, coverLetter } = req.body;
+    const { jobId, coverLetter } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'Please upload your resume' });
+    }
 
     // Check if job exists
     const job = await Job.findById(jobId);
@@ -31,7 +62,7 @@ router.post('/', protect, authorize('candidate'), async (req, res) => {
     const application = new Application({
       job: jobId,
       candidate: req.user._id,
-      resumeUrl,
+      resumeUrl: `/uploads/resumes/${req.file.filename}`,
       coverLetter
     });
 

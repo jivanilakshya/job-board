@@ -26,13 +26,22 @@ const Login = () => {
     setErrors({});
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', formData);
+      console.log('Login attempt with data:', {
+        email: formData.email,
+        passwordLength: formData.password.length
+      });
+      
+      const response = await axios.post('http://localhost:5000/api/auth/login', formData, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('Login response:', response.data);
       
       if (response.data.token) {
-        // Use the login function from AuthContext
         login(response.data.token);
         
-        // Get user role from decoded token
         const token = response.data.token;
         const base64Url = token.split('.')[1];
         const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -41,8 +50,8 @@ const Login = () => {
         }).join(''));
 
         const { user } = JSON.parse(jsonPayload);
+        console.log('Decoded user from token:', user);
         
-        // Navigate based on role
         if (user.role === 'employer') {
           navigate('/employer/dashboard');
         } else {
@@ -51,15 +60,20 @@ const Login = () => {
       }
     } catch (error) {
       console.error('Error logging in:', error);
+      console.error('Error response data:', error.response?.data);
+      console.error('Error response status:', error.response?.status);
+      console.error('Error response headers:', error.response?.headers);
+      
       if (error.response?.data?.errors) {
-        // Handle validation errors
         const validationErrors = {};
         error.response.data.errors.forEach(err => {
           validationErrors[err.param] = err.msg;
         });
         setErrors(validationErrors);
       } else {
-        setErrors({ submit: error.response?.data?.message || 'Login failed. Please try again.' });
+        setErrors({ 
+          submit: error.response?.data?.message || 'Login failed. Please check your credentials and try again.' 
+        });
       }
     } finally {
       setLoading(false);
