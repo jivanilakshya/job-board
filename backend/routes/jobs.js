@@ -5,6 +5,39 @@ const { protect, authorize } = require('../middleware/auth');
 const { sendEmail } = require('../services/emailService');
 const User = require('../models/User');
 
+// @route   GET /api/jobs/saved
+// @desc    Get user's saved jobs
+// @access  Private
+router.get('/saved', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate({
+      path: 'savedJobs',
+      select: 'title company location type category experience salary skills',
+      populate: {
+        path: 'employer',
+        select: 'name company'
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Only return saved jobs for candidates
+    if (user.role !== 'candidate') {
+      return res.status(403).json({ message: 'Only candidates can save jobs' });
+    }
+
+    res.json({
+      success: true,
+      data: user.savedJobs
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // @route   GET /api/jobs/featured
 // @desc    Get featured jobs
 // @access  Public
@@ -342,33 +375,6 @@ router.put('/:id/applications/:applicationId', protect, authorize('employer'), a
     res.json({
       success: true,
       data: application
-    });
-  } catch (err) {
-    console.error(err.message);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-// @route   GET /api/jobs/saved
-// @desc    Get user's saved jobs
-// @access  Private
-router.get('/saved', protect, async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id).populate({
-      path: 'savedJobs',
-      populate: {
-        path: 'employer',
-        select: 'name company'
-      }
-    });
-
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
-    }
-
-    res.json({
-      success: true,
-      data: user.savedJobs
     });
   } catch (err) {
     console.error(err.message);

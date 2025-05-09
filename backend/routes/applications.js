@@ -78,6 +78,28 @@ router.post('/', protect, authorize('candidate'), upload.single('resume'), async
   }
 });
 
+// @route   GET /api/applications/candidate
+// @desc    Get all applications for the current candidate
+// @access  Private (candidates only)
+router.get('/candidate', protect, authorize('candidate'), async (req, res) => {
+  try {
+    const applications = await Application.find({ candidate: req.user._id })
+      .populate({
+        path: 'job',
+        select: 'title company location type'
+      });
+
+    res.json({
+      success: true,
+      count: applications.length,
+      data: applications
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // @route   GET /api/applications
 // @desc    Get all applications for a user
 // @access  Private

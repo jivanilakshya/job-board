@@ -74,7 +74,9 @@ router.post('/register', [
     const payload = {
       user: {
         _id: user._id,
-        role: user.role
+        role: user.role,
+        name: user.name,
+        email: user.email
       }
     };
 
@@ -144,7 +146,9 @@ router.post('/login', [
     const payload = {
       user: {
         _id: user._id,
-        role: user.role
+        role: user.role,
+        name: user.name,
+        email: user.email
       }
     };
 

@@ -8,7 +8,7 @@ const { protect, authorize } = require('../middleware/auth');
 // @access  Private
 router.get('/profile', protect, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id);
+    const user = await User.findById(req.user._id).select('-password');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -36,7 +36,11 @@ router.put('/profile', protect, async (req, res) => {
       req.user._id,
       { $set: updateFields },
       { new: true, runValidators: true }
-    );
+    ).select('-password');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
     res.json({
       success: true,
