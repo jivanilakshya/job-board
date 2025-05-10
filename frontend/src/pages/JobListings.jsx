@@ -184,12 +184,6 @@ const JobListings = () => {
                       >
                         View Details
                       </Link>
-                      <Link
-                        to={`/jobs/${job._id}/apply`}
-                        className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition duration-300 w-full sm:w-auto text-center"
-                      >
-                        Apply Now
-                      </Link>
                     </div>
                   </div>
                 </div>

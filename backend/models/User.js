@@ -51,6 +51,10 @@ const UserSchema = new mongoose.Schema({
     maxlength: [500, 'Bio cannot be more than 500 characters']
   },
   skills: [String],
+  resume: {
+    type: String,
+    default: null
+  },
   savedJobs: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Job'

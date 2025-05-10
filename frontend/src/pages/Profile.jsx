@@ -11,11 +11,15 @@ const Profile = () => {
     location: '',
     bio: '',
     skills: '',
-    company: ''
+    company: '',
+    resume: null,
+    experience: '',
+    education: ''
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [currentResume, setCurrentResume] = useState(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -38,8 +42,11 @@ const Profile = () => {
           location: userData.location || '',
           bio: userData.bio || '',
           skills: userData.skills?.join(', ') || '',
-          company: userData.company || ''
+          company: userData.company || '',
+          experience: userData.experience?.[0]?.description || '',
+          education: userData.education?.[0]?.description || ''
         });
+        setCurrentResume(userData.resume);
       } catch (err) {
         setError('Failed to load profile data');
         console.error('Error fetching profile:', err);
@@ -52,10 +59,17 @@ const Profile = () => {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    if (e.target.name === 'resume') {
+      setFormData({
+        ...formData,
+        resume: e.target.files[0]
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [e.target.name]: e.target.value
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -70,14 +84,35 @@ const Profile = () => {
         throw new Error('No authentication token found');
       }
 
-      const dataToSubmit = {
-        ...formData,
-        skills: formData.skills.split(',').map(skill => skill.trim()).filter(Boolean)
-      };
+      const formDataToSubmit = new FormData();
+      Object.keys(formData).forEach(key => {
+        if (key === 'skills') {
+          formDataToSubmit.append(key, JSON.stringify(formData[key].split(',').map(skill => skill.trim()).filter(Boolean)));
+        } else if (key === 'resume' && formData[key]) {
+          formDataToSubmit.append(key, formData[key]);
+        } else if (key === 'experience' && formData[key]) {
+          formDataToSubmit.append(key, JSON.stringify([{
+            title: 'Work Experience',
+            description: formData[key],
+            from: new Date(),
+            current: true
+          }]));
+        } else if (key === 'education' && formData[key]) {
+          formDataToSubmit.append(key, JSON.stringify([{
+            school: 'Education',
+            description: formData[key],
+            from: new Date(),
+            current: true
+          }]));
+        } else {
+          formDataToSubmit.append(key, formData[key]);
+        }
+      });
 
-      await axios.put('http://localhost:5000/api/users/profile', dataToSubmit, {
+      await axios.put('http://localhost:5000/api/users/profile', formDataToSubmit, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
         }
       });
       setSuccess(true);
@@ -203,17 +238,67 @@ const Profile = () => {
             </div>
 
             {user?.role === 'candidate' && (
-              <div>
-                <label className="block text-gray-700 mb-2">Skills (comma-separated)</label>
-                <input
-                  type="text"
-                  name="skills"
-                  value={formData.skills}
-                  onChange={handleChange}
-                  className="w-full p-3 border rounded-lg"
-                  placeholder="e.g., JavaScript, React, Node.js"
-                />
-              </div>
+              <>
+                <div>
+                  <label className="block text-gray-700 mb-2">Skills (comma-separated)</label>
+                  <input
+                    type="text"
+                    name="skills"
+                    value={formData.skills}
+                    onChange={handleChange}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="e.g., JavaScript, React, Node.js"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 mb-2">Resume</label>
+                  {currentResume && (
+                    <div className="mb-2">
+                      <a
+                        href={`http://localhost:5000${currentResume}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        View Current Resume
+                      </a>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    name="resume"
+                    onChange={handleChange}
+                    className="w-full p-3 border rounded-lg"
+                    accept=".pdf,.doc,.docx"
+                  />
+                  <p className="text-sm text-gray-500 mt-1">Accepted formats: PDF, DOC, DOCX</p>
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 mb-2">Experience</label>
+                  <textarea
+                    name="experience"
+                    value={formData.experience}
+                    onChange={handleChange}
+                    className="w-full p-3 border rounded-lg"
+                    rows="4"
+                    placeholder="Describe your work experience"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-gray-700 mb-2">Education</label>
+                  <textarea
+                    name="education"
+                    value={formData.education}
+                    onChange={handleChange}
+                    className="w-full p-3 border rounded-lg"
+                    rows="4"
+                    placeholder="Describe your educational background"
+                  />
+                </div>
+              </>
             )}
 
             <button

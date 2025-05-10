@@ -66,7 +66,7 @@ const JobApplication = () => {
           'Content-Type': 'multipart/form-data'
         }
       });
-      navigate('/dashboard');
+      navigate('/candidate/dashboard');
     } catch (error) {
       console.error('Error submitting application:', error);
       setErrors({ submit: 'Failed to submit application. Please try again.' });

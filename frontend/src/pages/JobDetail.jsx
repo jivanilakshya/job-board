@@ -7,6 +7,7 @@ const JobDetail = () => {
   const navigate = useNavigate();
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showApplyForm, setShowApplyForm] = useState(false);
   const [application, setApplication] = useState({
     name: '',
     email: '',
@@ -14,6 +15,7 @@ const JobDetail = () => {
     resume: null,
     coverLetter: ''
   });
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchJobDetails = async () => {
@@ -23,6 +25,7 @@ const JobDetail = () => {
         setLoading(false);
       } catch (error) {
         console.error('Error fetching job details:', error);
+        setError('Failed to load job details');
         setLoading(false);
       }
     };
@@ -54,7 +57,6 @@ const JobDetail = () => {
         return;
       }
 
-      // Create FormData for file upload
       const formData = new FormData();
       formData.append('jobId', id);
       formData.append('resume', application.resume);
@@ -68,7 +70,7 @@ const JobDetail = () => {
       });
 
       alert('Application submitted successfully!');
-      navigate('/dashboard');
+      navigate('/candidate/dashboard');
     } catch (error) {
       console.error('Error submitting application:', error);
       if (error.response?.status === 401) {
@@ -91,64 +93,65 @@ const JobDetail = () => {
   }
 
   if (!job) {
-    return <div>Job not found</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-600">Job not found</p>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="max-w-4xl mx-auto">
           {/* Job Details */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h1 className="text-3xl font-bold mb-4">{job.title}</h1>
-              <div className="flex items-center mb-4">
-                <span className="text-gray-600 mr-4">{job.company}</span>
-                <span className="text-gray-500">{job.location}</span>
+          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h1 className="text-2xl font-bold mb-2">{job.title}</h1>
+                <p className="text-gray-600 mb-2">{job.company}</p>
+                <p className="text-gray-500 mb-4">{job.location}</p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                    {job.jobType}
+                  </span>
+                  <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
+                    {job.experience}
+                  </span>
+                  <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
+                    ${job.salary}
+                  </span>
+                </div>
               </div>
-              <div className="flex gap-2 mb-6">
-                <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-                  {job.jobType}
-                </span>
-                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full">
-                  {job.experience}
-                </span>
-                <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">
-                  ${job.salary}
-                </span>
-              </div>
-              <div className="prose max-w-none">
-                <h2 className="text-xl font-semibold mb-2">Job Description</h2>
-                <p className="mb-4">{job.description}</p>
-                <h2 className="text-xl font-semibold mb-2">Requirements</h2>
-                <ul className="list-disc pl-5 mb-4">
-                  {Array.isArray(job.requirements) 
-                    ? job.requirements.map((req, index) => (
-                        <li key={index}>{req}</li>
-                      ))
-                    : job.requirements.split('\n').map((req, index) => (
-                        <li key={index}>{req}</li>
-                      ))
-                  }
-                </ul>
-                <h2 className="text-xl font-semibold mb-2">Benefits</h2>
-                <ul className="list-disc pl-5">
-                  {Array.isArray(job.benefits)
-                    ? job.benefits.map((benefit, index) => (
-                        <li key={index}>{benefit}</li>
-                      ))
-                    : job.benefits?.split('\n').map((benefit, index) => (
-                        <li key={index}>{benefit}</li>
-                      ))
-                  }
-                </ul>
+              <button
+                onClick={() => setShowApplyForm(!showApplyForm)}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-300"
+              >
+                {showApplyForm ? 'Cancel' : 'Apply Now'}
+              </button>
+            </div>
+
+            <div className="prose max-w-none">
+              <h2 className="text-xl font-semibold mb-4">Job Description</h2>
+              <p className="whitespace-pre-wrap mb-6">{job.description}</p>
+
+              <h2 className="text-xl font-semibold mb-4">Requirements</h2>
+              <p className="whitespace-pre-wrap mb-6">{job.requirements}</p>
+
+              <h2 className="text-xl font-semibold mb-4">Required Skills</h2>
+              <div className="flex flex-wrap gap-2 mb-6">
+                {job.skills.map((skill, index) => (
+                  <span key={index} className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-sm">
+                    {skill}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
 
           {/* Application Form */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-md p-6 sticky top-6">
+          {showApplyForm && (
+            <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-2xl font-bold mb-4">Apply for this Position</h2>
               <form onSubmit={handleSubmit}>
                 <div className="mb-4">
@@ -192,6 +195,7 @@ const JobDetail = () => {
                     onChange={handleFileChange}
                     className="w-full p-2 border rounded"
                     required
+                    accept=".pdf,.doc,.docx"
                   />
                 </div>
                 <div className="mb-4">
@@ -213,7 +217,7 @@ const JobDetail = () => {
                 </button>
               </form>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

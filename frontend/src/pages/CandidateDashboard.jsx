@@ -120,7 +120,7 @@ const CandidateDashboard = () => {
           <h1 className="text-2xl font-bold mb-4 sm:mb-0">Candidate Dashboard</h1>
           <div className="flex gap-2">
             <Link
-              to="/profile/edit"
+              to="/profile"
               className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300 w-full sm:w-auto text-center"
             >
               Edit Profile
@@ -255,7 +255,7 @@ const CandidateDashboard = () => {
                     </div>
                   </div>
                   <Link
-                    to="/profile/edit"
+                    to="/profile"
                     className="text-blue-600 hover:underline text-sm mt-4 inline-block"
                   >
                     Complete your profile →
@@ -400,13 +400,52 @@ const CandidateDashboard = () => {
                         <span className="font-medium">Title:</span> {profile.title || 'Not provided'}
                       </p>
                       <p className="text-gray-600">
-                        <span className="font-medium">Experience:</span> {profile.experience || 'Not provided'}
+                        <span className="font-medium">Experience:</span>{' '}
+                        {(() => {
+                          try {
+                            if (!profile.experience) return 'Not provided';
+                            const exp = typeof profile.experience === 'string' 
+                              ? JSON.parse(profile.experience) 
+                              : profile.experience;
+                            return Array.isArray(exp) && exp.length > 0 
+                              ? exp[0].description 
+                              : 'Not provided';
+                          } catch (e) {
+                            return 'Not provided';
+                          }
+                        })()}
                       </p>
                       <p className="text-gray-600">
-                        <span className="font-medium">Education:</span> {profile.education || 'Not provided'}
+                        <span className="font-medium">Education:</span>{' '}
+                        {(() => {
+                          try {
+                            if (!profile.education) return 'Not provided';
+                            const edu = typeof profile.education === 'string' 
+                              ? JSON.parse(profile.education) 
+                              : profile.education;
+                            return Array.isArray(edu) && edu.length > 0 
+                              ? edu[0].description?.replace(/\r\n/g, '') 
+                              : 'Not provided';
+                          } catch (e) {
+                            return 'Not provided';
+                          }
+                        })()}
                       </p>
                       <p className="text-gray-600">
-                        <span className="font-medium">Skills:</span> {profile.skills?.join(', ') || 'Not provided'}
+                        <span className="font-medium">Skills:</span>{' '}
+                        {(() => {
+                          try {
+                            if (!profile.skills) return 'Not provided';
+                            const skills = typeof profile.skills === 'string' 
+                              ? JSON.parse(profile.skills) 
+                              : profile.skills;
+                            return Array.isArray(skills) && skills.length > 0 
+                              ? skills[0].join(', ') 
+                              : 'Not provided';
+                          } catch (e) {
+                            return 'Not provided';
+                          }
+                        })()}
                       </p>
                     </div>
                   </div>
@@ -414,16 +453,39 @@ const CandidateDashboard = () => {
                 {profile.resume && (
                   <div className="mt-6 pt-6 border-t">
                     <h3 className="text-lg font-semibold mb-4">Resume</h3>
-                    <a
-                      href={profile.resume}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      View Resume
-                    </a>
+                    <div className="flex gap-4">
+                      <a
+                        href={`http://localhost:5000${profile.resume}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline flex items-center gap-2"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
+                        </svg>
+                        View Resume
+                      </a>
+                      <a
+                        href={`http://localhost:5000${profile.resume}`}
+                        download
+                        className="text-green-600 hover:underline flex items-center gap-2"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                        </svg>
+                        Download Resume
+                      </a>
+                    </div>
                   </div>
                 )}
+                <div className="mt-6 pt-6 border-t">
+                  <Link
+                    to="/profile"
+                    className="text-blue-600 hover:underline"
+                  >
+                    Edit Full Profile →
+                  </Link>
+                </div>
               </div>
             </div>
           )}
