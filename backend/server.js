@@ -41,7 +41,14 @@ securityMiddleware(app);
 app.use(express.json());
 
 // Serve static files from uploads directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.pdf')) {
+      res.set('Content-Type', 'application/pdf');
+      res.set('Content-Disposition', 'inline');
+    }
+  }
+}));
 
 // Routes
 app.use('/api/auth', require('./routes/auth'));

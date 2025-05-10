@@ -2,6 +2,33 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const { protect, authorize } = require('../middleware/auth');
+const multer = require('multer');
+const path = require('path');
+
+// Configure multer for file upload
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+    cb(null, 'uploads/resumes');
+  },
+  filename: function(req, file, cb) {
+    cb(null, `${req.user._id}-${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  fileFilter: function(req, file, cb) {
+    const filetypes = /pdf|doc|docx/;
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = filetypes.test(file.mimetype);
+
+    if (extname && mimetype) {
+      return cb(null, true);
+    } else {
+      cb('Error: Only PDF, DOC, and DOCX files are allowed!');
+    }
+  }
+});
 
 // @route   GET /api/users/profile
 // @desc    Get current user profile
@@ -27,10 +54,34 @@ router.get('/profile', protect, async (req, res) => {
 // @route   PUT /api/users/profile
 // @desc    Update user profile
 // @access  Private
-router.put('/profile', protect, async (req, res) => {
+router.put('/profile', protect, upload.single('resume'), async (req, res) => {
   try {
     // Remove password from fields to be updated
     const { password, ...updateFields } = req.body;
+
+    // Handle file upload
+    if (req.file) {
+      updateFields.resume = `/uploads/resumes/${req.file.filename}`;
+    }
+
+    // Handle experience and education if they are strings
+    if (typeof updateFields.experience === 'string') {
+      updateFields.experience = [{
+        title: 'Work Experience',
+        description: updateFields.experience,
+        from: new Date(),
+        current: true
+      }];
+    }
+
+    if (typeof updateFields.education === 'string') {
+      updateFields.education = [{
+        school: 'Education',
+        description: updateFields.education,
+        from: new Date(),
+        current: true
+      }];
+    }
 
     const user = await User.findByIdAndUpdate(
       req.user._id,
