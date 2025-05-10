@@ -95,7 +95,7 @@ const EmployerDashboard = () => {
           <h1 className="text-2xl font-bold mb-4 sm:mb-0">Employer Dashboard</h1>
           <Link
             to="/post-job"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300 w-full sm:w-auto text-center"
+            className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-300 w-full sm:w-auto text-center"
           >
             Post New Job
           </Link>
@@ -154,7 +154,7 @@ const EmployerDashboard = () => {
                         </select>
                         <Link
                           to={`/jobs/${job._id}/edit`}
-                          className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition duration-300 w-full sm:w-auto text-center"
+                          className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-00 transition duration-300 w-full sm:w-auto text-center"
                         >
                           Edit
                         </Link>
@@ -173,9 +173,9 @@ const EmployerDashboard = () => {
                   <div key={application._id} className="bg-white border rounded-lg p-4">
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold mb-2">{application.job.title}</h3>
-                        <p className="text-gray-600 mb-2">{application.candidate.name}</p>
-                        <p className="text-gray-500 mb-2">{application.candidate.email}</p>
+                        <h3 className="text-xl font-semibold mb-2">{application.job?.title || 'Job Title Not Available'}</h3>
+                        <p className="text-gray-600 mb-2">{application.candidate?.name || 'Candidate Name Not Available'}</p>
+                        <p className="text-gray-500 mb-2">{application.candidate?.email || 'Email Not Available'}</p>
                         <div className="flex flex-wrap gap-2">
                           <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
                             {application.status}
@@ -199,7 +199,7 @@ const EmployerDashboard = () => {
                         </select>
                         <Link
                           to={`/applications/${application._id}`}
-                          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300 w-full sm:w-auto text-center"
+                          className="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-300 w-full sm:w-auto text-center"
                         >
                           View Details
                         </Link>

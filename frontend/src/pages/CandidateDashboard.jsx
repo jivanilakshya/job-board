@@ -20,21 +20,38 @@ const CandidateDashboard = () => {
     const fetchData = async () => {
       try {
         setError(null);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
         const [applicationsResponse, profileResponse, savedJobsResponse] = await Promise.all([
-          axios.get('http://localhost:5000/api/applications/candidate'),
-          axios.get('http://localhost:5000/api/profile'),
-          axios.get('http://localhost:5000/api/jobs/saved')
+          axios.get('http://localhost:5000/api/applications/candidate', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }),
+          axios.get('http://localhost:5000/api/users/profile', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }),
+          axios.get('http://localhost:5000/api/jobs/saved', {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          })
         ]);
         
-        setApplications(applicationsResponse.data);
-        setProfile(profileResponse.data);
+        setApplications(applicationsResponse.data.data || []);
+        setProfile(profileResponse.data.data);
         setSavedJobs(savedJobsResponse.data.data || []);
         
         // Calculate statistics
         const stats = {
-          totalApplications: applicationsResponse.data.length,
-          interviews: applicationsResponse.data.filter(app => app.status === 'interview').length,
-          offers: applicationsResponse.data.filter(app => app.status === 'offered').length,
+          totalApplications: (applicationsResponse.data.data || []).length,
+          interviews: (applicationsResponse.data.data || []).filter(app => app.status === 'interview').length,
+          offers: (applicationsResponse.data.data || []).filter(app => app.status === 'offered').length,
           savedJobs: (savedJobsResponse.data.data || []).length
         };
         setStats(stats);
@@ -42,7 +59,14 @@ const CandidateDashboard = () => {
         setLoading(false);
       } catch (error) {
         console.error('Error fetching data:', error);
-        setError(error.response?.data?.message || 'Error loading dashboard data');
+        if (error.response?.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem('token');
+          localStorage.removeItem('userRole');
+          window.location.href = '/login';
+        } else {
+          setError(error.response?.data?.message || 'Error loading dashboard data');
+        }
         setLoading(false);
       }
     };

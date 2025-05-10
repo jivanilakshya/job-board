@@ -18,11 +18,15 @@ export const AuthProvider = ({ children }) => {
         setUser(decoded.user);
         setIsAuthenticated(true);
         
+        // Store user role in localStorage
+        localStorage.setItem('userRole', decoded.user.role);
+        
         // Set default authorization header
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       } catch (error) {
         console.error('Error decoding token:', error);
         localStorage.removeItem('token');
+        localStorage.removeItem('userRole');
         delete axios.defaults.headers.common['Authorization'];
       }
     }
@@ -34,11 +38,16 @@ export const AuthProvider = ({ children }) => {
     const decoded = jwtDecode(token);
     setUser(decoded.user);
     setIsAuthenticated(true);
+    
+    // Store user role in localStorage
+    localStorage.setItem('userRole', decoded.user.role);
+    
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
     setUser(null);
     setIsAuthenticated(false);
     delete axios.defaults.headers.common['Authorization'];

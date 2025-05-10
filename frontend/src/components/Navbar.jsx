@@ -73,18 +73,7 @@ const Navbar = () => {
                 Post Job
               </Link>
             )}
-            <Link
-              to="/employers"
-              className="text-gray-600 hover:text-blue-600 transition duration-300 text-lg font-semibold"
-            >
-              For Employers
-            </Link>
-            <Link
-              to="/candidates"
-              className="text-gray-600 hover:text-blue-600 transition duration-300 text-lg font-semibold"
-            >
-              For Candidates
-            </Link>
+            
             {isLoggedIn ? (
               <>
                 <Link

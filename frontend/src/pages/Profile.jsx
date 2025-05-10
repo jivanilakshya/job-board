@@ -20,8 +20,17 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/users/me');
-        const userData = response.data;
+        const token = localStorage.getItem('token');
+        if (!token) {
+          throw new Error('No authentication token found');
+        }
+
+        const response = await axios.get('http://localhost:5000/api/users/profile', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const userData = response.data.data;
         setFormData({
           name: userData.name || '',
           email: userData.email || '',
@@ -56,12 +65,21 @@ const Profile = () => {
     setSuccess(false);
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const dataToSubmit = {
         ...formData,
         skills: formData.skills.split(',').map(skill => skill.trim()).filter(Boolean)
       };
 
-      await axios.put('http://localhost:5000/api/users/me', dataToSubmit);
+      await axios.put('http://localhost:5000/api/users/profile', dataToSubmit, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       setSuccess(true);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update profile');

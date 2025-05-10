@@ -15,6 +15,7 @@ import PostJob from './pages/PostJob';
 import SavedJobs from './pages/SavedJobs';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
+import ApplicationDetail from './pages/ApplicationDetail';
 
 const App = () => {
   return (
@@ -69,6 +70,14 @@ const App = () => {
                 element={
                   <PrivateRoute>
                     <Profile />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/applications/:id"
+                element={
+                  <PrivateRoute>
+                    <ApplicationDetail />
                   </PrivateRoute>
                 }
               />
