@@ -9,9 +9,6 @@ const JobDetail = () => {
   const [loading, setLoading] = useState(true);
   const [showApplyForm, setShowApplyForm] = useState(false);
   const [application, setApplication] = useState({
-    name: '',
-    email: '',
-    phone: '',
     resume: null,
     coverLetter: ''
   });
@@ -52,15 +49,27 @@ const JobDetail = () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('Please login to apply for this job');
+        setError('Please login to apply for this job');
         navigate('/login');
+        return;
+      }
+
+      // Check if user is a candidate
+      const userRole = localStorage.getItem('userRole');
+      if (userRole !== 'candidate') {
+        setError('Only candidates can apply for jobs');
+        return;
+      }
+
+      if (!application.resume) {
+        setError('Please upload your resume');
         return;
       }
 
       const formData = new FormData();
       formData.append('jobId', id);
       formData.append('resume', application.resume);
-      formData.append('coverLetter', application.coverLetter);
+      formData.append('coverLetter', application.coverLetter || '');
 
       await axios.post('http://localhost:5000/api/applications', formData, {
         headers: {
@@ -69,17 +78,19 @@ const JobDetail = () => {
         }
       });
 
-      alert('Application submitted successfully!');
+      setError(null);
       navigate('/candidate/dashboard');
     } catch (error) {
       console.error('Error submitting application:', error);
       if (error.response?.status === 401) {
-        alert('Please login to apply for this job');
+        setError('Please login to apply for this job');
         navigate('/login');
+      } else if (error.response?.status === 403) {
+        setError('Only candidates can apply for jobs');
       } else if (error.response?.status === 400) {
-        alert(error.response.data.message || 'Failed to submit application. Please try again.');
+        setError(error.response.data.message || 'Failed to submit application. Please try again.');
       } else {
-        alert('Failed to submit application. Please try again.');
+        setError('Failed to submit application. Please try again.');
       }
     }
   };
@@ -153,40 +164,12 @@ const JobDetail = () => {
           {showApplyForm && (
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-2xl font-bold mb-4">Apply for this Position</h2>
+              {error && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                  {error}
+                </div>
+              )}
               <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">Full Name</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={application.name}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border rounded"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={application.email}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border rounded"
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label className="block text-gray-700 mb-2">Phone</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={application.phone}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border rounded"
-                    required
-                  />
-                </div>
                 <div className="mb-4">
                   <label className="block text-gray-700 mb-2">Resume</label>
                   <input
@@ -197,6 +180,7 @@ const JobDetail = () => {
                     required
                     accept=".pdf,.doc,.docx"
                   />
+                  <p className="text-sm text-gray-500 mt-1">Accepted formats: PDF, DOC, DOCX</p>
                 </div>
                 <div className="mb-4">
                   <label className="block text-gray-700 mb-2">Cover Letter</label>
@@ -206,7 +190,7 @@ const JobDetail = () => {
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded"
                     rows="4"
-                    required
+                    placeholder="Tell us why you're interested in this position..."
                   ></textarea>
                 </div>
                 <button
