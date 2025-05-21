@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Status Update</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 30px;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: #2196F3;
+            color: white;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .content {
+            padding: 20px 0;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .status.accepted {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.review {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .status.interview {
+            background-color: #cce5ff;
+            color: #004085;
+            border: 1px solid #b8daff;
+        }
+        .message-box {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 1px solid #e9ecef;
+        }
+        .message-box blockquote {
+            border-left: 4px solid #2196F3;
+            padding-left: 15px;
+            margin: 15px 0;
+            font-style: italic;
+            color: #555;
+        }
+        .next-steps {
+            background-color: #e3f2fd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .next-steps h3 {
+            color: #1565C0;
+            margin-top: 0;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            font-size: 12px;
+            color: #666;
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+        }
+        .highlight {
+            color: #2196F3;
+            font-weight: bold;
+        }
+        .emoji {
+            font-size: 1.2em;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📬 Application Status Update</h1>
+        </div>
+        
+        <div class="content">
+            <p>Hello <span class="highlight">{{candidateName}}</span>,</p>
+            
+            <p>We have an update regarding your application for the position of <strong>{{jobTitle}}</strong> at <strong>{{companyName}}</strong>.</p>
+            
+            <div class="status {{status}}">
+                <span class="emoji">
+                    {{#if (eq status 'accepted')}}🎉
+                    {{else if (eq status 'rejected')}}😔
+                    {{else if (eq status 'interview')}}🤝
+                    {{else}}📋{{/if}}
+                </span>
+                Status: {{status}}
+            </div>
+
+            {{#if notes}}
+            <div class="message-box">
+                <h3>💬 Message from the employer:</h3>
+                <blockquote>
+                    {{notes}}
+                </blockquote>
+            </div>
+            {{/if}}
+
+            <div class="next-steps">
+                <h3>📌 Next Steps</h3>
+                {{#if (eq status 'accepted')}}
+                <p>Congratulations! Here's what you should do next:</p>
+                <ul>
+                    <li>Review the offer details in your dashboard</li>
+                    <li>Respond to the employer within the specified timeframe</li>
+                    <li>Prepare for your onboarding process</li>
+                </ul>
+                {{else if (eq status 'interview')}}
+                <p>Great news! Here's what you should do next:</p>
+                <ul>
+                    <li>Check your dashboard for interview details</li>
+                    <li>Prepare for your interview</li>
+                    <li>Review the job description and company information</li>
+                </ul>
+                {{else if (eq status 'rejected')}}
+                <p>Don't worry! Here are some suggestions:</p>
+                <ul>
+                    <li>Browse other job opportunities</li>
+                    <li>Update your profile and resume</li>
+                    <li>Apply for similar positions</li>
+                </ul>
+                {{else}}
+                <p>What you can do now:</p>
+                <ul>
+                    <li>Check your application status in your dashboard</li>
+                    <li>Update your profile if needed</li>
+                    <li>Browse other job opportunities</li>
+                </ul>
+                {{/if}}
+            </div>
+
+            <p>Best regards,<br>The Job Board Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated message, please do not reply to this email.</p>
+            <p>Need help? Contact our support team at support@jobboard.com</p>
+            <p>&copy; {{currentYear}} Job Board. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html> 
