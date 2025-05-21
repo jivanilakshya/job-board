@@ -6,6 +6,11 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+// Register Handlebars helpers
+handlebars.registerHelper('eq', function (v1, v2) {
+  return v1 === v2;
+});
+
 // Create reusable transporter
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
@@ -20,7 +25,7 @@ const transporter = nodemailer.createTransport({
 // Email templates
 const templates = {
   welcome: (name) => ({
-    subject: 'Welcome to Job Board!',
+    subject: 'Welcome to Job Board',
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #333;">Welcome to Job Board!</h1>
@@ -61,22 +66,36 @@ const templates = {
       path.join(__dirname, '../templates/job-application.html'),
       'utf-8'
     );
-    return handlebars.compile(template)(data);
+    const compiledTemplate = handlebars.compile(template);
+    return {
+      subject: `Application Submitted - ${data.jobTitle}`,
+      html: compiledTemplate({
+        ...data,
+        currentYear: new Date().getFullYear()
+      })
+    };
   },
-  jobPosted: async (data) => {
+  applicationStatus: async (data) => {
     const template = await fs.readFile(
-      path.join(__dirname, '../templates/job-posted.html'),
+      path.join(__dirname, '../templates/application-status.html'),
       'utf-8'
     );
-    return handlebars.compile(template)(data);
+    const compiledTemplate = handlebars.compile(template);
+    return {
+      subject: `Application Status Update - ${data.jobTitle}`,
+      html: compiledTemplate({
+        ...data,
+        currentYear: new Date().getFullYear()
+      })
+    };
   }
 };
 
 /**
  * Send an email using a template
  * @param {string} to - Recipient email address
- * @param {string} template - Template name ('welcome' or 'passwordReset')
- * @param {Array} data - Array of data to be used in the template
+ * @param {string} template - Template name
+ * @param {Array|Object} data - Data to be used in the template
  * @returns {Promise} - Promise that resolves when email is sent
  */
 const sendEmail = async (to, template, data = []) => {
@@ -85,7 +104,7 @@ const sendEmail = async (to, template, data = []) => {
       throw new Error(`Template ${template} not found`);
     }
 
-    const { subject, html } = templates[template](...data);
+    const { subject, html } = await templates[template](data);
 
     const mailOptions = {
       from: `"Job Board" <${process.env.SMTP_USER}>`,
