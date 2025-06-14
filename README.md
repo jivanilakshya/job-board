@@ -58,15 +58,6 @@ backend/
 - Bcrypt (Password Hashing)
 - Multer (File Uploads)
 
-## 📷 Screenshots
-
-> Place your images in \`frontend/public/screenshots/\` and reference them below.
-
-## 📷 Screenshot
-
-![Landing Page](frontend/public/screenshots/landing.PNG)
-
-
 ## 🔌 API Endpoints
 
 ### 🔐 Authentication
